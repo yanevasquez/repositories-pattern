@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  app:
+    build:
+      args:
+        user: $USER
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: repositories-app
+    container_name: php_repositories
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - rede
+      
+  db:
+    image: postgres:9.6-alpine
+    restart: unless-stopped
+    container_name: db_repositories
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      PGUSER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: posgres
+    volumes:   
+        - ./docker-compose/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - rede
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_repositories
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - rede
+
+networks:
+  rede:
+    driver: bridge
